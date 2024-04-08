@@ -93,3 +93,8 @@ Download the files using your terminal: wget -r -N -c -np --user mehakg --ask-pa
 - Follow each code bloack and read intructions given just before each code block to run code block.
 - Follow the exact file paths and filenames given in instructions for each code block to run the pipeline.
 - For evaluation module, clear instructions are provided on how to use it as a standalone module.
+
+
+### Custom notes:
+* To get metadata for ICD10 codes: download http://medical.sourceforge.net/
+This is license GPL v3. Should you download the tar and extract it in the health_icd10 folder there is xml files that has the correct information
