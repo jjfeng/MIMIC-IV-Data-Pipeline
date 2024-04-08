@@ -133,7 +133,7 @@ class Generator():
             if final.empty:
                 final=chart
             else:
-                final=final.append(chart, ignore_index=True)
+                final=pd.concat([final, chart], ignore_index=True)
         
         self.chart=final
         

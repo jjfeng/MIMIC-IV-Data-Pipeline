@@ -342,8 +342,9 @@ def extract_data(use_ICU:str, label:str, time:int, icd_code:str, root_dir, disea
     if use_disease:
         print(cohort)
         hids=disease_cohort.extract_diag_cohort(cohort['hadm_id'],icd_code,root_dir+"/mimiciv/1.0/")
-        hids = hids.sample(n=max_patients, ignore_index=True)
-        print("SAMPLED HIDS", hids)
+        if max_patients is not None:
+            hids = hids.sample(n=max_patients, ignore_index=True)
+            print("SAMPLED HIDS", hids)
         #print(hids.shape)
         #print(cohort.shape)
         #print(len(list(set(hids['hadm_id'].unique()).intersection(set(cohort['hadm_id'].unique())))))
