@@ -96,5 +96,7 @@ Download the files using your terminal: wget -r -N -c -np --user mehakg --ask-pa
 
 
 ### Custom notes:
+* diagnosis codes are only for that admission. it doesnt contain historical diagnoses or problems
+
 * To get metadata for ICD10 codes: download http://medical.sourceforge.net/
 This is license GPL v3. Should you download the tar and extract it in the health_icd10 folder there is xml files that has the correct information
