@@ -133,6 +133,7 @@ class ML_models():
             self.train_model(X_train,Y_train,X_test,Y_test)
     
     def train_model(self,X_train,Y_train,X_test,Y_test):
+        print("Y_TRAIN", Y_train)
         #logits=[]
         print("===============MODEL TRAINING===============")
         if self.model_type=='Gradient Bossting':
@@ -184,6 +185,8 @@ class ML_models():
         #print(ids)
         for sample in ids:
             if self.data_icu:
+                print("lAble y", (labels['stay_id']==sample).sum())
+                assert (labels['stay_id']==sample).sum() > 0
                 y=labels[labels['stay_id']==sample]['label']
             else:
                 y=labels[labels['hadm_id']==sample]['label']
@@ -191,6 +194,7 @@ class ML_models():
             #print(sample)
             dyn=pd.read_csv('./data/csv/'+str(sample)+'/dynamic.csv',header=[0,1])
             
+            print("self.concat", self.concat)
             if self.concat:
                 dyn.columns=dyn.columns.droplevel(0)
                 dyn=dyn.to_numpy()
@@ -202,6 +206,7 @@ class ML_models():
             else:
                 dyn_df=pd.DataFrame()
                 #print(dyn)
+                print(dyn.columns.levels[0])
                 for key in dyn.columns.levels[0]:
                     #print(sample)                    
                     dyn_temp=dyn[key]
@@ -229,6 +234,7 @@ class ML_models():
                 dyn_df=dyn_df.T
                 dyn_df.columns = dyn_df.iloc[0]
                 dyn_df=dyn_df.iloc[1:,:]
+                print("dyn_df", dyn_df.shape)
                         
 #             print(dyn.shape)
 #             print(dyn_df.shape)
@@ -237,20 +243,27 @@ class ML_models():
             stat=stat['COND']
 #             print(stat.shape)
 #             print(stat.head())
-            demo=pd.read_csv('./data/csv/'+str(sample)+'/demo.csv',header=0)
+            demo=pd.read_csv('./data/csv/'+str(sample)+'/demo.csv',header=0).drop_duplicates()
 #             print(demo.shape)
-#             print(demo.head())
+            print(demo)
+            print("X_df PRE", X_df)
             if X_df.empty:
+                print("APPEND DYN DF", dyn_df.shape, stat.shape, demo.shape)
                 X_df=pd.concat([dyn_df,stat],axis=1)
                 X_df=pd.concat([X_df,demo],axis=1)
+                print("X_df EMPTY", X_df.shape)
             else:
+                print("APPEND DYN DF", dyn_df.shape, demo.shape, stat.shape)
+                print("APPEND SHAPE", pd.concat([pd.concat([dyn_df,stat],axis=1),demo],axis=1).shape)
                 X_df=pd.concat([X_df,pd.concat([pd.concat([dyn_df,stat],axis=1),demo],axis=1)],axis=0)
+                print("X_df notempty", X_df.shape)
             if y_df.empty:
                 y_df=y
             else:
                 y_df=pd.concat([y_df,y],axis=0)
-#             print("X_df",X_df.shape)
-#             print("y_df",y_df.shape)
+            print("X_df",X_df.shape)
+            print("y_df",y_df.shape)
+            assert X_df.shape[0] == y_df.shape[0]
         print("X_df",X_df.shape)
         print("y_df",y_df.shape)
         return X_df ,y_df
