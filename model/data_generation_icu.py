@@ -450,8 +450,9 @@ class Generator():
 
         for hid in self.hids:
             grp=self.data[self.data['stay_id']==hid]
-            dataDic[hid]={'Cond':{},'Proc':{},'Med':{},'Out':{},'Chart':{},'ethnicity':grp['ethnicity'].iloc[0],'age':grp['Age'].astype(int),'gender':grp['gender'].iloc[0],'label':grp['label'].astype(int)}
-            labels_csv.loc[labels_csv['stay_id']==hid,'label']=grp['label'].astype(int)
+            dataDic[hid]={'Cond':{},'Proc':{},'Med':{},'Out':{},'Chart':{},'ethnicity':grp['ethnicity'].iloc[0],'age':grp['Age'].iloc[0].astype(int),'gender':grp['gender'].iloc[0],'label':grp['label'].iloc[0].astype(int)}
+            labels_csv.loc[labels_csv['stay_id']==hid,'label']=int(grp['label'].iloc[0]) #.astype(int)
+            print("LABELE", labels_csv.loc[labels_csv['stay_id']==hid,'label'])
             
 
             #print(static_csv.head())
