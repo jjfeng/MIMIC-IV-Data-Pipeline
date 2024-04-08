@@ -101,6 +101,10 @@ class ML_models():
                     concat_cols.extend(cols_t)
             print('train_hids',len(train_hids))
             X_train,Y_train=self.getXY(train_hids,labels,concat_cols)
+
+            X_train.to_csv("./data/csv/X_train.csv", index=False)
+            Y_train.to_csv("./data/csv/Y_train.csv", index=False)
+
             #encoding categorical
             gen_encoder = LabelEncoder()
             eth_encoder = LabelEncoder()
@@ -112,11 +116,12 @@ class ML_models():
             #age_encoder.fit(X_train['Age'])
             X_train['gender']=gen_encoder.transform(X_train['gender'])
             X_train['ethnicity']=eth_encoder.transform(X_train['ethnicity'])
+            print(X_train['ethnicity'])
             X_train['insurance']=ins_encoder.transform(X_train['insurance'])
             #X_train['Age']=age_encoder.transform(X_train['Age'])
 
-            print(X_train.shape)
-            print(Y_train.shape)
+            print("TRAIN", X_train.shape)
+            print("TRAIN", Y_train.shape)
             print('test_hids',len(test_hids))
             X_test,Y_test=self.getXY(test_hids,labels,concat_cols)
             self.test_data=X_test.copy(deep=True)
@@ -126,8 +131,10 @@ class ML_models():
             #X_test['Age']=age_encoder.transform(X_test['Age'])
             
             
-            print(X_test.shape)
-            print(Y_test.shape)
+            print("TEST",X_test.shape)
+            print("TEST", Y_test.shape)
+            X_test.to_csv("./data/csv/X_test.csv", index=False)
+            Y_test.to_csv("./data/csv/Y_test.csv", index=False)
             #print("just before training")
             #print(X_test.head())
             self.train_model(X_train,Y_train,X_test,Y_test)
@@ -247,7 +254,6 @@ class ML_models():
                 X_df=pd.concat([X_df,demo],axis=1)
             else:
                 X_df=pd.concat([X_df,pd.concat([pd.concat([dyn_df,stat],axis=1),demo],axis=1)],axis=0)
-            print("y", y)
             if y_df.empty:
                 y_df=y
             else:
@@ -291,6 +297,7 @@ class ML_models():
         imp_df=pd.DataFrame()
         imp_df['imp']=importance
         imp_df['feature']=features
+        print("IUMPORTANT", imp_df)
         imp_df.to_csv('./data/output/'+'feature_importance.csv', index=False)
                 
                 
