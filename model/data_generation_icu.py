@@ -117,8 +117,8 @@ class Generator():
         final=pd.DataFrame()
         for chart in tqdm(pd.read_csv("./data/features/preproc_chart_icu.csv.gz", compression='gzip', header=0, index_col=None,chunksize=chunksize)):
             chart=chart[chart['stay_id'].isin(self.data['stay_id'])]
-            chart[['start_days', 'dummy','start_hours']] = chart['event_time_from_admit'].str.split(' ', -1, expand=True)
-            chart[['start_hours','min','sec']] = chart['start_hours'].str.split(':', -1, expand=True)
+            chart[['start_days', 'dummy','start_hours']] = chart['event_time_from_admit'].str.split(' ', n=-1, expand=True)
+            chart[['start_hours','min','sec']] = chart['start_hours'].str.split(':', n=-1, expand=True)
             chart['start_time']=pd.to_numeric(chart['start_days'])*24+pd.to_numeric(chart['start_hours'])
             chart=chart.drop(columns=['start_days', 'dummy','start_hours','min','sec','event_time_from_admit'])
             chart=chart[chart['start_time']>=0]
@@ -340,7 +340,7 @@ class Generator():
                 if final_chart.empty:
                     final_chart=sub_chart
                 else:    
-                    final_chart=final_chart.append(sub_chart)
+                    final_chart=pd.concat([final_chart, sub_chart])
             
              t=t+1
         print("bucket",bucket)

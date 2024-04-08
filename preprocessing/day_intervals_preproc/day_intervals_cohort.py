@@ -249,7 +249,7 @@ def get_case_ctrls(df:pd.DataFrame, gap:int, group_col:str, visit_col:str, admit
     # print(f"[ {gap.days} DAYS ] {invalid.shape[0]} hadm_ids are invalid")
 
 
-def extract_data(use_ICU:str, label:str, time:int, icd_code:str, root_dir, disease_label, cohort_output=None, summary_output=None):
+def extract_data(use_ICU:str, label:str, time:int, icd_code:str, root_dir, disease_label, cohort_output=None, summary_output=None, max_patients=None):
     """Extracts cohort data and summary from MIMIC-IV data based on provided parameters.
 
     Parameters:
@@ -340,7 +340,10 @@ def extract_data(use_ICU:str, label:str, time:int, icd_code:str, root_dir, disea
     #print(cohort.head())
     
     if use_disease:
+        print(cohort)
         hids=disease_cohort.extract_diag_cohort(cohort['hadm_id'],icd_code,root_dir+"/mimiciv/1.0/")
+        hids = hids.sample(n=max_patients, ignore_index=True)
+        print("SAMPLED HIDS", hids)
         #print(hids.shape)
         #print(cohort.shape)
         #print(len(list(set(hids['hadm_id'].unique()).intersection(set(cohort['hadm_id'].unique())))))
