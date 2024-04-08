@@ -61,8 +61,8 @@ class Generator():
         data['outtime'] = pd.to_datetime(data['outtime'])
         data['los']=pd.to_timedelta(data['outtime']-data['intime'],unit='h')
         data['los']=data['los'].astype(str)
-        data[['days', 'dummy','hours']] = data['los'].str.split(' ', -1, expand=True)
-        data[['hours','min','sec']] = data['hours'].str.split(':', -1, expand=True)
+        data[['days', 'dummy','hours']] = data['los'].str.split(' ',n=-1, expand=True)
+        data[['hours','min','sec']] = data['hours'].str.split(':', n=-1, expand=True)
         data['los']=pd.to_numeric(data['days'])*24+pd.to_numeric(data['hours'])
         data=data.drop(columns=['days', 'dummy','hours','min','sec'])
         data=data[data['los']>0]
@@ -80,8 +80,8 @@ class Generator():
     def generate_proc(self):
         proc=pd.read_csv("./data/features/preproc_proc_icu.csv.gz", compression='gzip', header=0, index_col=None)
         proc=proc[proc['stay_id'].isin(self.data['stay_id'])]
-        proc[['start_days', 'dummy','start_hours']] = proc['event_time_from_admit'].str.split(' ', -1, expand=True)
-        proc[['start_hours','min','sec']] = proc['start_hours'].str.split(':', -1, expand=True)
+        proc[['start_days', 'dummy','start_hours']] = proc['event_time_from_admit'].str.split(' ', n=-1, expand=True)
+        proc[['start_hours','min','sec']] = proc['start_hours'].str.split(':', n=-1, expand=True)
         proc['start_time']=pd.to_numeric(proc['start_days'])*24+pd.to_numeric(proc['start_hours'])
         proc=proc.drop(columns=['start_days', 'dummy','start_hours','min','sec'])
         proc=proc[proc['start_time']>=0]
@@ -97,8 +97,8 @@ class Generator():
     def generate_out(self):
         out=pd.read_csv("./data/features/preproc_out_icu.csv.gz", compression='gzip', header=0, index_col=None)
         out=out[out['stay_id'].isin(self.data['stay_id'])]
-        out[['start_days', 'dummy','start_hours']] = out['event_time_from_admit'].str.split(' ', -1, expand=True)
-        out[['start_hours','min','sec']] = out['start_hours'].str.split(':', -1, expand=True)
+        out[['start_days', 'dummy','start_hours']] = out['event_time_from_admit'].str.split(' ', n=-1, expand=True)
+        out[['start_hours','min','sec']] = out['start_hours'].str.split(':', n=-1, expand=True)
         out['start_time']=pd.to_numeric(out['start_days'])*24+pd.to_numeric(out['start_hours'])
         out=out.drop(columns=['start_days', 'dummy','start_hours','min','sec'])
         out=out[out['start_time']>=0]
@@ -141,11 +141,11 @@ class Generator():
         
     def generate_meds(self):
         meds=pd.read_csv("./data/features/preproc_med_icu.csv.gz", compression='gzip', header=0, index_col=None)
-        meds[['start_days', 'dummy','start_hours']] = meds['start_hours_from_admit'].str.split(' ', -1, expand=True)
-        meds[['start_hours','min','sec']] = meds['start_hours'].str.split(':', -1, expand=True)
+        meds[['start_days', 'dummy','start_hours']] = meds['start_hours_from_admit'].str.split(' ', n=-1, expand=True)
+        meds[['start_hours','min','sec']] = meds['start_hours'].str.split(':', n=-1, expand=True)
         meds['start_time']=pd.to_numeric(meds['start_days'])*24+pd.to_numeric(meds['start_hours'])
-        meds[['start_days', 'dummy','start_hours']] = meds['stop_hours_from_admit'].str.split(' ', -1, expand=True)
-        meds[['start_hours','min','sec']] = meds['start_hours'].str.split(':', -1, expand=True)
+        meds[['start_days', 'dummy','start_hours']] = meds['stop_hours_from_admit'].str.split(' ', n=-1, expand=True)
+        meds[['start_hours','min','sec']] = meds['start_hours'].str.split(':',n=-1, expand=True)
         meds['stop_time']=pd.to_numeric(meds['start_days'])*24+pd.to_numeric(meds['start_hours'])
         meds=meds.drop(columns=['start_days', 'dummy','start_hours','min','sec'])
         #####Sanity check
@@ -329,7 +329,7 @@ class Generator():
                 if final_out.empty:
                     final_out=sub_out
                 else:    
-                    final_out=final_out.append(sub_out)
+                    final_out=pd.concat([final_out, sub_out])
                     
                     
               ###CHART
@@ -450,8 +450,8 @@ class Generator():
 
         for hid in self.hids:
             grp=self.data[self.data['stay_id']==hid]
-            dataDic[hid]={'Cond':{},'Proc':{},'Med':{},'Out':{},'Chart':{},'ethnicity':grp['ethnicity'].iloc[0],'age':int(grp['Age']),'gender':grp['gender'].iloc[0],'label':int(grp['label'])}
-            labels_csv.loc[labels_csv['stay_id']==hid,'label']=int(grp['label'])
+            dataDic[hid]={'Cond':{},'Proc':{},'Med':{},'Out':{},'Chart':{},'ethnicity':grp['ethnicity'].iloc[0],'age':grp['Age'].astype(int),'gender':grp['gender'].iloc[0],'label':grp['label'].astype(int)}
+            labels_csv.loc[labels_csv['stay_id']==hid,'label']=grp['label'].astype(int)
             
 
             #print(static_csv.head())
