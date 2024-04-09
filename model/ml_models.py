@@ -12,7 +12,7 @@ from sklearn.model_selection import KFold
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 import xgboost as xgb
 from pathlib import Path
-from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier, GradientBoostingClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import HistGradientBoostingClassifier
@@ -145,12 +145,19 @@ class ML_models():
         #logits=[]
         print("===============MODEL TRAINING===============")
         if self.model_type=='Gradient Bossting':
-            model = HistGradientBoostingClassifier(categorical_features=[X_train.shape[1]-3,X_train.shape[1]-2,X_train.shape[1]-1]).fit(X_train, Y_train)
+            # model = HistGradientBoostingClassifier(categorical_features=[X_train.shape[1]-3,X_train.shape[1]-2,X_train.shape[1]-1]).fit(X_train, Y_train)
+            X_train=pd.get_dummies(X_train,prefix=['gender','ethnicity','insurance'],columns=['gender','ethnicity','insurance'])
+            X_test=pd.get_dummies(X_test,prefix=['gender','ethnicity','insurance'],columns=['gender','ethnicity','insurance'])
+            model = GradientBoostingClassifier().fit(X_train, Y_train)
             
+            logits=model.predict_log_proba(X_test)
             prob=model.predict_proba(X_test)
-            logits=np.log2(prob[:,1]/prob[:,0])
-            self.loss(prob[:,1],np.asarray(Y_test),logits,False,True)
-            self.save_output(Y_test,prob[:,1],logits)
+            self.loss(prob[:,1],np.asarray(Y_test),logits[:,1],False,True)
+            # prob=model.predict_proba(X_test)
+            # logits=np.log2(prob[:,1]/prob[:,0])
+            # self.loss(prob[:,1],np.asarray(Y_test),logits,False,True)
+            # self.save_output(Y_test,prob[:,1],logits)
+            self.save_outputImp(Y_test,prob[:,1],logits[:,1],model.feature_importances_,X_train.columns)
         
         elif self.model_type=='Logistic Regression':
             X_train=pd.get_dummies(X_train,prefix=['gender','ethnicity','insurance'],columns=['gender','ethnicity','insurance'])
