@@ -65,6 +65,7 @@ def get_visit_pts(mimic4_path:str, group_col:str, visit_col:str, admit_col:str, 
         )
     pts['yob']= pts['anchor_year'] - pts['anchor_age']  # get yob to ensure a given visit is from an adult
     pts['min_valid_year'] = pts['anchor_year'] + (2019 - pts['anchor_year_group'].str.slice(start=-4).astype(int))
+
     
     # Define anchor_year corresponding to the anchor_year_group 2017-2019. This is later used to prevent consideration
     # of visits with prediction windows outside the dataset's time range (2008-2019)
@@ -133,7 +134,7 @@ def partition_by_los(df:pd.DataFrame, los:int, group_col:str, visit_col:str, adm
     return cohort, invalid
         
         
-def partition_by_readmit(df:pd.DataFrame, gap:datetime.timedelta, group_col:str, visit_col:str, admit_col:str, disch_col:str, valid_col:str):
+def partition_by_readmit(df:pd.DataFrame, gap:datetime.timedelta, group_col:str, visit_col:str, admit_col:str, disch_col:str, valid_col:str, disease_hids = None):
     """Applies labels to individual visits according to whether or not a readmission has occurred within the specified `gap` days.
     For a given visit, another visit must occur within the gap window for a positive readmission label.
     The gap window starts from the disch_col time and the admit_col of subsequent visits are considered."""
@@ -141,6 +142,11 @@ def partition_by_readmit(df:pd.DataFrame, gap:datetime.timedelta, group_col:str,
     case = pd.DataFrame()   # hadm_ids with readmission within the gap period
     ctrl = pd.DataFrame()   # hadm_ids without readmission within the gap period
     invalid = pd.DataFrame()    # hadm_ids that are not considered in the cohort
+
+    print("df", df)
+    print("disease hids", disease_hids)
+    df['is_hf'] = df.hadm_id.isin(disease_hids.hadm_id)
+    print("df is hf", df.is_hf.sum())
 
     # Iterate through groupbys based on group_col (subject_id). Data is sorted by subject_id and admit_col (admittime)
     # to ensure that the most current hadm_id is last in a group.
@@ -157,7 +163,8 @@ def partition_by_readmit(df:pd.DataFrame, gap:datetime.timedelta, group_col:str,
                 visit_time = group.iloc[idx][disch_col]  # For each index (a unique hadm_id), get its timestamp
                 if group.loc[
                     (group[admit_col] > visit_time) &    # Readmissions must come AFTER the current timestamp
-                    (group[admit_col] - visit_time <= gap)   # Distance between a timestamp and readmission must be within gap
+                    (group[admit_col] - visit_time <= gap) &  # Distance between a timestamp and readmission must be within gap
+                    (group.is_hf)
                     ].shape[0] >= 1:                # If ANY rows meet above requirements, a readmission has occurred after that visit
 
                     case = pd.concat([case, group.iloc[idx:idx+1]])
@@ -213,7 +220,7 @@ def partition_by_mort(df:pd.DataFrame, group_col:str, visit_col:str, admit_col:s
     return cohort, invalid
 
 
-def get_case_ctrls(df:pd.DataFrame, gap:int, group_col:str, visit_col:str, admit_col:str, disch_col:str, valid_col:str, death_col:str, use_mort=False,use_admn=False,use_los=False) -> pd.DataFrame:
+def get_case_ctrls(df:pd.DataFrame, gap:int, group_col:str, visit_col:str, admit_col:str, disch_col:str, valid_col:str, death_col:str, use_mort=False,use_admn=False,use_los=False, hids=None) -> pd.DataFrame:
     """Handles logic for creating the labelled cohort based on arguments passed to extract().
 
     Parameters:
@@ -236,7 +243,7 @@ def get_case_ctrls(df:pd.DataFrame, gap:int, group_col:str, visit_col:str, admit
     elif use_admn:
         gap = datetime.timedelta(days=gap)
         # transform gap into a timedelta to compare with datetime columns
-        case, ctrl, invalid = partition_by_readmit(df, gap, group_col, visit_col, admit_col, disch_col, valid_col)
+        case, ctrl, invalid = partition_by_readmit(df, gap, group_col, visit_col, admit_col, disch_col, valid_col, hids)
 
         # case hadm_ids are labelled 1 for readmission, ctrls have a 0 label
         case['label'] = np.ones(case.shape[0]).astype(int)
@@ -320,7 +327,11 @@ def extract_data(use_ICU:str, label:str, time:int, icd_code:str, root_dir, disea
         disease_label=disease_label,
         use_ICU=use_ICU
     )
-    #print("pts",pts.head())
+    # print("pts",pts.head())
+    
+    if use_disease:
+        disease_hids=disease_cohort.extract_diag_cohort(None,icd_code,root_dir+"/mimiciv/1.0/")
+        print("disease_hids", disease_hids)
     
     # cols to be extracted from get_case_ctrls
     cols = [group_col, visit_col, admit_col, disch_col, 'Age','gender','ethnicity','insurance','label']
@@ -330,7 +341,7 @@ def extract_data(use_ICU:str, label:str, time:int, icd_code:str, root_dir, disea
         cohort, invalid = get_case_ctrls(pts, None, group_col, visit_col, admit_col, disch_col,'min_valid_year', death_col, use_mort=True,use_admn=False,use_los=False)
     elif use_admn:
         interval = time
-        cohort, invalid = get_case_ctrls(pts, interval, group_col, visit_col, admit_col, disch_col,'min_valid_year', death_col, use_mort=False,use_admn=True,use_los=False)
+        cohort, invalid = get_case_ctrls(pts, interval, group_col, visit_col, admit_col, disch_col,'min_valid_year', death_col, use_mort=False,use_admn=True,use_los=False, hids=disease_hids)
     elif use_los:
         cohort, invalid = get_case_ctrls(pts, los, group_col, visit_col, admit_col, disch_col,'min_valid_year', death_col, use_mort=False,use_admn=False,use_los=True)
     #print(cohort.head())
